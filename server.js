@@ -1,8 +1,11 @@
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 import cors from "cors";
 import  path from "path";
+
 const app = express();
 const PORT = process.env.PORT || 8000;
 
@@ -12,8 +15,10 @@ app.use(morgan("dev")); // logs all the incoming req information
 app.use(cors()); // allow cross origin resources
 app.use(express.json()); // convert income data in the req.body
 
-const _dirname = path.resolve();
-console.log(_dirname);
+const __dirname = path.resolve();
+console.log(__dirname);
+app.use(express.static(path.join(__dirname, "/client/build")));
+
 // MongoDB connect
 import { connectDB } from "./src/config/dbConfig.js";
 connectDB();
@@ -24,6 +29,15 @@ import transRouter from "./src/routers/transRouter.js";
 import { isAuth } from "./src/middleware/authMiddleware.js";
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/transaction", isAuth, transRouter);
+
+app.get("/dashboard", (req, res) =>{
+  res.redirect("/")
+});
+
+app.use("/", (req, res) => {
+
+  res.sendFile(path.join(__dirname, "/build/index.html"))
+});
 
 // catch when router is not found
 app.use("*", (req, res, next) => {
@@ -36,9 +50,9 @@ app.use("*", (req, res, next) => {
 
 // global error handler
 app.use((error, req, res, next) => {
-  console.log(error);
-  const code = error.code || 500;
-  res.status(code).json({
+  // console.log(error);
+  // const code = error.code || 500;
+  res.json({
     status: "error",
     message: error.message,
   });
